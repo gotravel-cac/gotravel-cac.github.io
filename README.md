@@ -9,27 +9,36 @@ A modern travel planning website with Google Maps integration and AI-powered iti
 - **Safety features** including emergency contacts and location sharing
 - **Mobile-responsive design** with modern UI
 
+## Quick Start
+
+1. **Clone or download** this repository
+2. **Get API Keys:**
+   - **Google Maps**: [Google Cloud Console](https://console.cloud.google.com/) → Enable Maps JavaScript API & Places API
+   - **OpenAI**: [OpenAI Platform](https://platform.openai.com/api-keys) → Create new API key
+3. **For local testing**: Replace `'your-openai-api-key-here'` in `index.html` line 830 with your actual OpenAI key
+4. **Open** `index.html` in your browser
+
 ## API Keys Setup
 
 ### Google Maps API
-- Already configured in `index.html`
-- Restrict the key in Google Cloud Console for security:
+- Already configured in `index.html` with a development key
+- **For production**: Replace with your own key and restrict it in Google Cloud Console:
   - Application restrictions → HTTP referrers:
-    - `https://gotravel-cac.github.io/*`
+    - `https://your-domain.com/*`
     - `http://localhost/*` (for local testing)
   - API restrictions → enable only:
     - Maps JavaScript API, Places API, Geocoding API
 
 ### OpenAI API
-- **For development**: Replace `'your-openai-api-key-here'` in `index.html` with your actual key
+- **For development**: Replace placeholder in `index.html` with your actual key
 - **For production**: Use environment variables or serverless functions
-- Copy `.env.example` to `.env.local` and add your key
 - Uses GPT-4o-mini model for cost-effective AI generation
 
-### Security Note
+### Security Best Practices
 - Never commit API keys to version control
-- The `.gitignore` file is configured to protect environment files
-- For production deployment, use serverless functions or environment variables
+- Use `.env.local` for local development (already in `.gitignore`)
+- For production: implement serverless proxy or use environment variables
+- Rotate keys if accidentally exposed
 
 ## How to Use
 1. Open `index.html` in a web browser
