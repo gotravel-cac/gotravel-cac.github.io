@@ -68,8 +68,49 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
-    <!-- Google Maps API -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBQJQ5ChISn7PMXa7Qbp7ITbkufZv6Tsvc&libraries=places&callback=initMap"></script>
+    <!-- Google Maps API with enhanced error handling -->
+    <script>
+        // Global variables for debugging
+        window.mapLoadAttempts = 0;
+        
+        // Enhanced error handler for Google Maps
+        function gm_authFailure() {
+            console.error('Google Maps authentication failed');
+            const mapElement = document.getElementById('map');
+            if (mapElement) {
+                mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f3f4f6; color: #6b7280; text-align: center; font-size: 1.1rem;"><div><div style="font-size: 2rem; margin-bottom: 1rem;">🗺️</div><div>Map Service Unavailable</div><div style="font-size: 0.9rem; margin-top: 0.5rem;">Please check your connection or try refreshing</div></div></div>';
+            }
+        }
+
+        // Fallback if Google Maps doesn't load within 10 seconds
+        setTimeout(function() {
+            if (typeof google === 'undefined' || !google.maps) {
+                console.warn('Google Maps failed to load within 10 seconds');
+                gm_authFailure();
+            }
+        }, 10000);
+
+        // Check if maps loaded successfully
+        function checkMapLoad() {
+            window.mapLoadAttempts++;
+            console.log('Map load attempt:', window.mapLoadAttempts);
+            
+            if (typeof google !== 'undefined' && google.maps) {
+                console.log('Google Maps API loaded successfully');
+                return true;
+            } else if (window.mapLoadAttempts < 5) {
+                setTimeout(checkMapLoad, 2000);
+            } else {
+                console.error('Google Maps failed to load after multiple attempts');
+                gm_authFailure();
+            }
+            return false;
+        }
+
+        // Start checking immediately
+        setTimeout(checkMapLoad, 1000);
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBQJQ5ChISn7PMXa7Qbp7ITbkufZv6Tsvc&libraries=places&callback=initMap&onerror=gm_authFailure"></script>
     
     <!-- Schema.org markup for Google+ -->
     <meta itemprop="name" content="go.travel - Your AI-Powered Travel Companion">
@@ -226,6 +267,7 @@
         .form-group {
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .form-group label {
@@ -315,56 +357,386 @@
             box-shadow: var(--shadow);
         }
 
-        /* Itinerary Display */
-        .itinerary-container {
-            margin-top: 2rem;
-            display: none;
-        }
-
-        .day-card {
-            background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%);
+        /* Enhanced AI Itinerary Display */
+        .ai-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
             border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .destination-overview {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
             padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid var(--accent-blue);
-        }
-
-        .day-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-blue);
-            margin-bottom: 1rem;
-        }
-
-        .activity {
-            background: white;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .activity-time {
-            font-weight: 600;
-            color: var(--accent-green);
-        }
-
-        .activity-title {
-            font-weight: 600;
-            margin: 0.5rem 0;
-        }
-
-        .safety-alert {
-            background: #fef3c7;
-            border: 1px solid #fbbf24;
-            border-radius: 10px;
-            padding: 1rem;
             margin-top: 1rem;
         }
 
-        .safety-alert h4 {
-            color: #92400e;
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .overview-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .neighborhoods {
+            margin-top: 1rem;
+            text-align: left;
+        }
+
+        .neighborhoods ul {
+            margin-left: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .enhanced-day-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--accent-blue);
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .day-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .day-theme {
+            background: var(--secondary-gradient);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .weather-note {
+            background: #e0f2fe;
+            border: 1px solid #4fc3f7;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .enhanced-activity {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 0.5rem;
+        }
+
+        .activity-time {
+            font-weight: 700;
+            color: var(--accent-green);
+            font-size: 1.1rem;
+        }
+
+        .activity-duration {
+            background: var(--accent-green);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        .activity-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .activity-location {
+            color: var(--text-light);
+            font-style: italic;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .activity-description {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .activity-cost {
+            background: #f0fdf4;
+            border: 1px solid #22c55e;
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: #15803d;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .insider-tip {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .backup-option {
+            background: #f3f4f6;
+            border-left: 4px solid #6b7280;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .meals-section {
+            background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .meals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .meal-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .day-extras {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .cultural-insight {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .photo-ops {
+            background: #fdf4ff;
+            border-left: 4px solid #d946ef;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .practical-info-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .budget-breakdown {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .budget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .budget-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .budget-category {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .budget-amount {
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .total-budget {
+            text-align: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--secondary-gradient);
+            color: white;
+            border-radius: 8px;
+            font-size: 1.1rem;
+        }
+
+        .packing-section, .culture-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .packing-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .packing-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .packing-list li:before {
+            content: "🎒";
+            position: absolute;
+            left: 0;
+        }
+
+        .dos-donts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .dos, .donts {
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .dos {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+        }
+
+        .donts {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+        }
+
+        .extras-section {
+            background: linear-gradient(135deg, #fdf4ff 0%, #f3e8ff 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .hidden-gems, .local-events {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .hidden-gems ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .hidden-gems li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .hidden-gems li:before {
+            content: "💎";
+            position: absolute;
+            left: 0;
+        }
+
+        /* Map Container */
+        .map-container {
+            height: 500px;
+            min-height: 400px;
+            background: #e5e7eb;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            margin: 2rem 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .map-container {
+                height: 300px;
+                margin: 1rem 0;
+            }
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .map-control-btn {
+            background: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+        }
+
+        .map-control-btn:hover {
+            background: #f3f4f6;
         }
 
         /* Safety Features */
@@ -409,44 +781,6 @@
 
         .emergency-button:hover {
             background: #dc2626;
-        }
-
-        /* Map Container */
-        .map-container {
-            height: 400px;
-            background: #e5e7eb;
-            border-radius: 15px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-            border-radius: 15px;
-        }
-
-        .map-controls {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 1000;
-            display: flex;
-            gap: 10px;
-        }
-
-        .map-control-btn {
-            background: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            font-size: 0.9rem;
-        }
-
-        .map-control-btn:hover {
-            background: #f3f4f6;
         }
 
         /* Modal */
@@ -713,6 +1047,22 @@
             </div>
             
             <button type="button" class="generate-btn" onclick="generateItinerary()">Generate My Perfect Itinerary</button>
+            <button type="button" class="generate-btn" onclick="testGeminiAPI()" style="background: #28a745; margin-left: 1rem;">Test AI Connection</button>
+            <button type="button" class="generate-btn" onclick="runDiagnostics()" style="background: #ffc107; color: #000; margin-left: 1rem;">Run Diagnostics</button>
+            
+            <div id="status-messages" style="margin: 1rem 0; padding: 1rem; border-radius: 8px; display: none;">
+                <!-- Status messages will appear here -->
+            </div>
+            
+            <div id="help-tips" style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #007bff;">💡 Quick Tips:</h4>
+                <ul style="margin: 0; padding-left: 1.5rem;">
+                    <li>Start typing in the destination field to see autocomplete suggestions</li>
+                    <li>Use "Test AI Connection" to verify the AI service is working</li>
+                    <li>Use "Run Diagnostics" if you experience any issues</li>
+                    <li>Select your interests to get personalized recommendations</li>
+                </ul>
+            </div>
             
             <div class="loading" id="loading">
                 <div class="spinner"></div>
@@ -742,13 +1092,6 @@
                     <h3>Live Location Sharing</h3>
                     <p>Share your location with trusted contacts for added security</p>
                     <button class="cta-button" onclick="shareLocation()">Share Location</button>
-                </div>
-                
-                <div class="safety-card">
-                    <div class="safety-icon">⚠️</div>
-                    <h3>Safety Alerts</h3>
-                    <p>Real-time safety information and area-specific warnings</p>
-                    <button class="cta-button" onclick="checkSafetyAlerts()">Check Current Alerts</button>
                 </div>
                 
                 <div class="safety-card">
@@ -821,34 +1164,138 @@
         let autocompleteService;
         let markersArray = [];
 
-        // AI Configuration - Replace with your OpenAI API key
+        // AI Configuration - Using Google Gemini API
         // For production: Use environment variables or serverless functions to keep keys secure
-        const AI_API_KEY = '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';
-        const AI_API_URL = 'https://api.openai.com/v1/chat/completions';        // Initialize Google Maps
+        const AI_API_KEY = 'AIzaSyCTvaHSOhBtsLlfA0GPCFBa2kJnReoh4FI';
+        const AI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';        // Initialize Google Maps
         function initMap() {
-            // Default location (New York)
-            const defaultLocation = { lat: 40.7128, lng: -74.0060 };
-            
-            map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 13,
-                center: defaultLocation,
-                styles: [
-                    {
-                        featureType: 'poi',
-                        elementType: 'labels',
-                        stylers: [{ visibility: 'on' }]
-                    }
-                ]
+            console.log('initMap called');
+            try {
+                if (typeof google === 'undefined' || !google.maps) {
+                    console.error('Google Maps API not loaded');
+                    showMapFallback();
+                    return;
+                }
+
+                console.log('Google Maps API is available');
+                const defaultLocation = { lat: 40.7128, lng: -74.0060 };
+                
+                const mapElement = document.getElementById('map');
+                if (!mapElement) {
+                    console.error('Map element not found');
+                    return;
+                }
+
+                console.log('Creating Google Map...');
+                map = new google.maps.Map(mapElement, {
+                    zoom: 13,
+                    center: defaultLocation,
+                    styles: [
+                        {
+                            featureType: 'poi',
+                            elementType: 'labels',
+                            stylers: [{ visibility: 'on' }]
+                        }
+                    ]
+                });
+
+                console.log('Map created successfully');
+
+                placesService = new google.maps.places.PlacesService(map);
+                autocompleteService = new google.maps.places.AutocompleteService();
+
+                // Try to get user's current location
+                getCurrentLocation();
+
+                // Setup destination autocomplete
+                setupDestinationAutocomplete();
+
+                // Initialize Places Autocomplete for better reliability
+                initPlacesAutocomplete();
+                
+                console.log('Google Maps initialized successfully');
+            } catch (error) {
+                console.error('Error initializing Google Maps:', error);
+                showMapFallback();
+            }
+        }
+
+        function showMapFallback() {
+            const mapElement = document.getElementById('map');
+            if (mapElement) {
+                mapElement.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; font-size: 1.1rem; border-radius: 15px;">
+                        <div>
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
+                            <div style="font-size: 1.3rem; margin-bottom: 0.5rem;">Interactive Map</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Will load your destination when selected</div>
+                        </div>
+                    </div>
+                `;
+            }
+            // Still setup a basic autocomplete for destinations
+            setupBasicAutocomplete();
+        }
+
+        function setupBasicAutocomplete() {
+            console.log('Setting up basic autocomplete fallback');
+            const destinationInput = document.getElementById('destination');
+            if (destinationInput) {
+                // Add basic city suggestions
+                const popularDestinations = [
+                    'New York, NY, USA', 'Paris, France', 'Tokyo, Japan', 'London, UK',
+                    'Rome, Italy', 'Barcelona, Spain', 'Amsterdam, Netherlands',
+                    'Berlin, Germany', 'Bangkok, Thailand', 'Sydney, Australia',
+                    'Los Angeles, CA, USA', 'Dubai, UAE', 'Singapore', 'Vienna, Austria',
+                    'Prague, Czech Republic', 'Istanbul, Turkey', 'Cairo, Egypt'
+                ];
+
+                destinationInput.addEventListener('input', function() {
+                    const value = this.value.toLowerCase();
+                    if (value.length < 2) return;
+
+                    const suggestions = popularDestinations.filter(dest => 
+                        dest.toLowerCase().includes(value)
+                    ).slice(0, 5);
+
+                    showBasicSuggestions(suggestions, this);
+                });
+            }
+        }
+
+        function showBasicSuggestions(suggestions, inputElement) {
+            // Remove existing suggestions
+            const existingSuggestions = document.getElementById('basic-suggestions');
+            if (existingSuggestions) {
+                existingSuggestions.remove();
+            }
+
+            if (suggestions.length === 0) return;
+
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.id = 'basic-suggestions';
+            suggestionsDiv.className = 'suggestions-dropdown';
+            suggestionsDiv.style.display = 'block';
+
+            suggestions.forEach(suggestion => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.textContent = suggestion;
+                item.addEventListener('click', () => {
+                    inputElement.value = suggestion;
+                    suggestionsDiv.remove();
+                });
+                suggestionsDiv.appendChild(item);
             });
 
-            placesService = new google.maps.places.PlacesService(map);
-            autocompleteService = new google.maps.places.AutocompleteService();
+            inputElement.parentNode.appendChild(suggestionsDiv);
 
-            // Try to get user's current location
-            getCurrentLocation();
-
-            // Setup destination autocomplete
-            setupDestinationAutocomplete();
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!inputElement.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                    suggestionsDiv.remove();
+                }
+            }, { once: true });
         }
 
         function getCurrentLocation() {
@@ -883,8 +1330,13 @@
             const destinationInput = document.getElementById('destination');
             const suggestionsDiv = document.getElementById('destination-suggestions');
 
+            if (!destinationInput || !suggestionsDiv) {
+                console.error('Destination input or suggestions div not found');
+                return;
+            }
+
             destinationInput.addEventListener('input', function() {
-                const value = this.value;
+                const value = this.value.trim();
                 if (value.length < 3) {
                     suggestionsDiv.style.display = 'none';
                     return;
@@ -897,8 +1349,13 @@
                     }, (predictions, status) => {
                         if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
                             displaySuggestions(predictions, suggestionsDiv);
+                        } else {
+                            console.log('Autocomplete status:', status);
+                            suggestionsDiv.style.display = 'none';
                         }
                     });
+                } else {
+                    console.error('Autocomplete service not initialized');
                 }
             });
 
@@ -952,6 +1409,41 @@
                     });
                 }
             });
+        }
+
+        // Alternative autocomplete implementation using Google Places Autocomplete widget
+        function initPlacesAutocomplete() {
+            try {
+                const destinationInput = document.getElementById('destination');
+                if (destinationInput && typeof google !== 'undefined' && google.maps && google.maps.places) {
+                    const autocomplete = new google.maps.places.Autocomplete(destinationInput, {
+                        types: ['(cities)'],
+                        fields: ['place_id', 'geometry', 'name', 'formatted_address']
+                    });
+
+                    autocomplete.addListener('place_changed', function() {
+                        const place = autocomplete.getPlace();
+                        if (place.geometry && map) {
+                            map.setCenter(place.geometry.location);
+                            map.setZoom(12);
+                            clearMarkers();
+                            new google.maps.Marker({
+                                position: place.geometry.location,
+                                map: map,
+                                title: place.formatted_address || place.name
+                            });
+                        }
+                    });
+                    console.log('Places Autocomplete initialized successfully');
+                } else {
+                    console.log('Google Maps Places not available, using manual input');
+                    if (destinationInput) {
+                        destinationInput.placeholder = "Enter destination (e.g., Paris, Tokyo, New York)";
+                    }
+                }
+            } catch (error) {
+                console.error('Error initializing Places Autocomplete:', error);
+            }
         }
 
         function findNearbyAttractions() {
@@ -1008,7 +1500,21 @@
             markersArray = [];
         }
 
-        // AI-Powered Itinerary Generation
+        // Status message helper function
+        function showStatusMessage(message, type = 'info') {
+            const statusDiv = document.getElementById('status-messages');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = `<div style="color: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#007bff'}; font-weight: bold;">${message}</div>`;
+            
+            // Auto-hide after 5 seconds unless it's an error
+            if (type !== 'error') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // AI-Powered Itinerary Generation with Enhanced Intelligence
         async function generateItineraryWithAI() {
             const form = document.getElementById('itinerary-form');
             const formData = new FormData(form);
@@ -1024,113 +1530,559 @@
             const dietary = formData.get('dietary');
 
             if (!destination || !startDate || !endDate) {
-                alert('Please fill in all required fields');
+                showStatusMessage('Please fill in all required fields (destination, start date, end date)', 'error');
                 return;
             }
 
-            // Show loading
+            // Validate destination is a real place
+            const cleanDestination = destination.toLowerCase().trim();
+            if (cleanDestination.includes('test') || cleanDestination.includes('haha') || cleanDestination.includes('doesnt') || cleanDestination.length < 3) {
+                showStatusMessage('Please enter a real destination (e.g., Paris, Tokyo, New York)', 'error');
+                return;
+            }
+
+            // Show loading and status
+            showStatusMessage('Starting AI itinerary generation...', 'info');
             document.getElementById('loading').style.display = 'block';
             document.getElementById('itinerary-results').style.display = 'none';
 
             try {
-                const prompt = `Create a detailed travel itinerary for:
-                Destination: ${destination}
-                Dates: ${startDate} to ${endDate}
-                Budget: ${budget}
-                Accommodation: ${accommodation}
-                Transportation: ${transportation}
-                Group size: ${groupSize}
-                Dietary restrictions: ${dietary || 'None'}
-                Interests: ${interests.join(', ') || 'General sightseeing'}
+                // Calculate trip duration and season
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                const month = start.toLocaleDateString('en-US', { month: 'long' });
+                const season = getSeason(start.getMonth());
 
-                Please provide a day-by-day itinerary with:
-                1. Specific activities with times
-                2. Restaurant recommendations
-                3. Transportation details
-                4. Safety tips for each day
-                5. Estimated costs where relevant
+                // Enhanced AI prompt with more context and intelligence
+                const prompt = `You are an expert travel agent with deep knowledge of global destinations, local cultures, and travel logistics. Create a highly detailed, personalized travel itinerary.
 
-                Format as JSON with this structure:
-                {
-                  "days": [
-                    {
-                      "day": 1,
-                      "date": "date",
-                      "activities": [
-                        {
-                          "time": "9:00 AM",
-                          "title": "Activity Name",
-                          "description": "Details",
-                          "type": "sightseeing/food/transport",
-                          "cost": "estimated cost"
-                        }
-                      ],
-                      "safetyTip": "Safety advice for the day"
-                    }
-                  ],
-                  "totalEstimatedCost": "total budget estimate",
-                  "generalTips": ["tip1", "tip2"]
-                }`;
+DESTINATION ANALYSIS:
+- Location: ${destination}
+- Travel Dates: ${startDate} to ${endDate} (${duration} days)
+- Season: ${month} (${season})
+- Budget Level: ${budget}
+- Group: ${groupSize}
+- Accommodation Style: ${accommodation}
+- Transportation: ${transportation}
+- Dietary Requirements: ${dietary || 'None'}
+- Interests: ${interests.join(', ') || 'General exploration'}
 
-                // Direct call to OpenAI from the browser (key is visible to users)
-                const response = await fetch(AI_API_URL, {
+REQUIREMENTS:
+1. Research the destination's culture, climate, and current season
+2. Consider local events, festivals, or seasonal activities happening during the visit
+3. Provide specific, real venue names and locations where possible
+4. Include cultural etiquette tips and local customs
+5. Suggest authentic local experiences beyond typical tourist activities
+6. Consider travel logistics, opening hours, and practical timing
+7. Include backup indoor activities for potential weather issues
+8. Provide realistic cost estimates in local currency and USD
+9. Consider the group dynamics and age-appropriate activities
+10. Include safety considerations and local emergency information
+
+ENHANCED OUTPUT FORMAT (JSON):
+{
+  "destination_overview": {
+    "climate": "Weather description for travel dates",
+    "culture_highlights": ["Cultural insight 1", "Cultural insight 2"],
+    "local_currency": "Currency name and approximate exchange rate",
+    "language_basics": ["Hello in local language", "Thank you", "Excuse me"],
+    "tipping_customs": "Local tipping practices",
+    "best_neighborhoods": ["Area 1 with description", "Area 2 with description"]
+  },
+  "days": [
+    {
+      "day": 1,
+      "date": "${start.toLocaleDateString()}",
+      "theme": "Arrival & Orientation",
+      "weather_consideration": "Expected weather and recommendations",
+      "activities": [
+        {
+          "time": "9:00 AM",
+          "title": "Specific Activity Name",
+          "location": "Exact address or landmark",
+          "description": "Detailed description with why this is recommended",
+          "duration": "2 hours",
+          "cost": {
+            "amount": "Price range",
+            "currency": "Local currency",
+            "usd_equivalent": "$XX-XX"
+          },
+          "type": "arrival/sightseeing/food/culture/adventure",
+          "insider_tip": "Local secret or pro tip",
+          "backup_option": "Alternative if weather/closure issues"
+        }
+      ],
+      "meals": {
+        "breakfast": {
+          "restaurant": "Specific restaurant name",
+          "specialty": "What to order",
+          "cost": "$XX",
+          "why_recommended": "Reason for selection"
+        },
+        "lunch": {
+          "restaurant": "Name",
+          "specialty": "Dish",
+          "cost": "$XX",
+          "why_recommended": "Reason"
+        },
+        "dinner": {
+          "restaurant": "Name",
+          "specialty": "Dish",
+          "cost": "$XX",
+          "why_recommended": "Reason"
+        }
+      },
+      "transportation_notes": "How to get around today, costs, tips",
+      "cultural_insight": "Something interesting about local culture relevant to today",
+      "safety_tip": "Specific safety advice for today's activities",
+      "photo_opportunities": ["Best photo spot 1", "Best photo spot 2"]
+    }
+  ],
+  "practical_information": {
+    "total_estimated_cost": {
+      "budget_breakdown": {
+        "accommodation": "$XXX",
+        "food": "$XXX",
+        "activities": "$XXX",
+        "transportation": "$XXX",
+        "shopping": "$XXX"
+      },
+      "total_per_person": "$XXX",
+      "total_for_group": "$XXX"
+    },
+    "packing_essentials": ["Item 1 with reason", "Item 2 with reason"],
+    "local_apps": ["Useful app 1", "Useful app 2"],
+    "emergency_contacts": {
+      "police": "Local number",
+      "medical": "Local number",
+      "tourist_helpline": "If available"
+    },
+    "cultural_dos_and_donts": {
+      "dos": ["Do this", "Do that"],
+      "donts": ["Don't do this", "Don't do that"]
+    }
+  },
+  "hidden_gems": ["Secret spot 1 with description", "Secret spot 2 with description"],
+  "local_events": "Any festivals, markets, or special events during the visit",
+  "sustainable_travel_tips": ["Eco-friendly option 1", "Eco-friendly option 2"],
+  "contingency_plans": {
+    "rainy_day": ["Indoor activity 1", "Indoor activity 2"],
+    "budget_cuts": ["Free/cheap alternative 1", "Free/cheap alternative 2"],
+    "extra_time": ["Bonus activity 1", "Bonus activity 2"]
+  }
+}
+
+Provide this as clean JSON only. Make it personal, practical, and memorable. Include real places, specific recommendations, and insider knowledge that makes this trip special.`;
+
+                // Call Gemini with enhanced prompt
+                showStatusMessage('Connecting to AI service...', 'info');
+                console.log('Calling Gemini API with destination:', destination);
+                const response = await fetch(`${AI_API_URL}?key=${AI_API_KEY}`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${AI_API_KEY}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'gpt-4o-mini',
-                        messages: [
-                            {
-                                role: 'system',
-                                content: 'You are a professional travel planner. Provide detailed, practical itineraries in JSON format.'
-                            },
-                            {
-                                role: 'user',
-                                content: prompt
-                            }
-                        ],
-                        temperature: 0.7
+                        contents: [{
+                            parts: [{
+                                text: prompt  // Use the prompt directly without extra system message
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 4000,
+                            candidateCount: 1
+                        }
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error('AI service unavailable');
+                    const errorText = await response.text();
+                    console.error('Gemini API Error:', response.status, errorText);
+                    throw new Error(`AI service unavailable: ${response.status}`);
                 }
 
                 const data = await response.json();
+                console.log('Gemini API Response:', data);
 
-                // Proxy can return either a clean itinerary object or a raw OpenAI response
-                if (data && data.itinerary) {
-                    displayAIItinerary(data.itinerary);
-                } else if (data && data.choices && data.choices[0]?.message?.content) {
-                    const itineraryText = data.choices[0].message.content;
+                // Parse Gemini response
+                if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
                     try {
-                        const itinerary = JSON.parse(itineraryText);
-                        displayAIItinerary(itinerary);
+                        showStatusMessage('Processing AI response...', 'info');
+                        const itineraryText = data.candidates[0].content.parts[0].text;
+                        console.log('Raw AI response:', itineraryText);
+                        
+                        // Clean the response to extract JSON
+                        const jsonStart = itineraryText.indexOf('{');
+                        const jsonEnd = itineraryText.lastIndexOf('}') + 1;
+                        
+                        if (jsonStart === -1 || jsonEnd === 0) {
+                            throw new Error('No JSON found in response');
+                        }
+                        
+                        const jsonString = itineraryText.substring(jsonStart, jsonEnd);
+                        console.log('Extracted JSON:', jsonString);
+                        
+                        const itinerary = JSON.parse(jsonString);
+                        showStatusMessage('AI itinerary generated successfully!', 'success');
+                        displayEnhancedAIItinerary(itinerary);
                     } catch (parseError) {
-                        console.log('AI response parsing failed, using fallback');
-                        const fallbackItinerary = createSampleItinerary(destination, startDate, endDate, interests);
-                        displayItinerary(fallbackItinerary);
+                        console.error('AI response parsing failed:', parseError);
+                        console.log('Raw response text:', data.candidates[0].content.parts[0].text);
+                        showStatusMessage('AI response format error. Generating fallback itinerary...', 'error');
+                        generateFallbackItinerary(destination, startDate, endDate, interests, budget, groupSize);
                     }
                 } else {
-                    // Unknown shape; fallback
-                    const fallbackItinerary = createSampleItinerary(destination, startDate, endDate, interests);
-                    displayItinerary(fallbackItinerary);
+                    console.error('Invalid Gemini response structure:', data);
+                    throw new Error('Invalid AI response format');
                 }
-
             } catch (error) {
                 console.error('AI Generation failed:', error);
-                alert('AI service is currently unavailable. Generating basic itinerary...');
-                
-                // Fallback to original method
-                const fallbackItinerary = createSampleItinerary(destination, startDate, endDate, interests);
-                displayItinerary(fallbackItinerary);
+                showStatusMessage('AI service is currently unavailable. Generating fallback itinerary...', 'error');
+                generateFallbackItinerary(destination, startDate, endDate, interests, budget, groupSize);
             }
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('itinerary-results').style.display = 'block';
+        }
+
+        // Create a fallback itinerary when AI fails
+        function generateFallbackItinerary(destination, startDate, endDate, interests, budget, groupSize) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            
+            const fallbackItinerary = {
+                destination_overview: {
+                    climate: `Weather information for ${destination} in ${start.toLocaleDateString('en-US', { month: 'long' })}`,
+                    culture_highlights: [`Local culture of ${destination}`, "Traditional customs and practices"],
+                    local_currency: "Local currency information",
+                    language_basics: ["Hello", "Thank you", "Please"],
+                    tipping_customs: "Standard tipping practices",
+                    best_neighborhoods: [`Central ${destination}`, `Historic district of ${destination}`]
+                },
+                days: []
+            };
+
+            // Generate days based on interests and preferences
+            for (let i = 0; i < duration; i++) {
+                const currentDate = new Date(start);
+                currentDate.setDate(start.getDate() + i);
+                
+                const dayActivities = [];
+                const selectedInterests = interests.length > 0 ? interests : ['food', 'history', 'nature'];
+                
+                // Morning activity based on interests
+                const morningInterest = selectedInterests[i % selectedInterests.length];
+                dayActivities.push({
+                    time: "9:00 AM",
+                    duration: "3 hours",
+                    title: getActivityByInterest(morningInterest, destination),
+                    location: `${destination} ${morningInterest} district`,
+                    description: `Explore ${destination}'s ${morningInterest} offerings with this carefully curated experience.`,
+                    cost: budget === 'budget' ? '$15-25' : budget === 'mid-range' ? '$30-50' : '$60-100',
+                    insider_tip: `Best to visit early in the morning for fewer crowds.`,
+                    backup_option: `Indoor alternative available if weather doesn't cooperate.`
+                });
+                
+                // Lunch
+                dayActivities.push({
+                    time: "12:30 PM",
+                    duration: "1.5 hours",
+                    title: `Authentic ${destination} Cuisine`,
+                    location: `Local restaurant in ${destination}`,
+                    description: `Experience traditional flavors and local specialties.`,
+                    cost: budget === 'budget' ? '$8-15' : budget === 'mid-range' ? '$20-35' : '$45-70',
+                    insider_tip: `Ask locals for their favorite dishes.`,
+                    backup_option: `Food courts available for quick options.`
+                });
+                
+                // Afternoon activity
+                const afternoonInterest = selectedInterests[(i + 1) % selectedInterests.length];
+                dayActivities.push({
+                    time: "2:30 PM",
+                    duration: "3 hours",
+                    title: getActivityByInterest(afternoonInterest, destination),
+                    location: `${destination} ${afternoonInterest} area`,
+                    description: `Continue your ${destination} adventure with ${afternoonInterest} exploration.`,
+                    cost: budget === 'budget' ? '$10-20' : budget === 'mid-range' ? '$25-45' : '$50-80',
+                    insider_tip: `Perfect time for photos and cultural immersion.`,
+                    backup_option: `Indoor venues available nearby.`
+                });
+
+                fallbackItinerary.days.push({
+                    day: i + 1,
+                    date: currentDate.toLocaleDateString(),
+                    theme: i === 0 ? "Arrival & First Impressions" : i === duration - 1 ? "Final Experiences" : `${selectedInterests[i % selectedInterests.length]} Focus`,
+                    weather_note: `Check weather forecast for outdoor activities`,
+                    activities: dayActivities,
+                    meals: {
+                        breakfast: `Local café near accommodation`,
+                        lunch: `Traditional ${destination} restaurant`,
+                        dinner: `Recommended local dining experience`
+                    },
+                    cultural_insight: `${destination} is known for its rich cultural heritage and welcoming locals.`,
+                    photo_opportunities: [`Scenic viewpoints`, `Local architecture`, `Street scenes`]
+                });
+            }
+
+            fallbackItinerary.practical_information = {
+                budget_breakdown: {
+                    activities: budget === 'budget' ? '$25-45/day' : budget === 'mid-range' ? '$55-95/day' : '$105-180/day',
+                    food: budget === 'budget' ? '$20-35/day' : budget === 'mid-range' ? '$40-70/day' : '$80-150/day',
+                    transportation: '$10-25/day',
+                    total_estimated: budget === 'budget' ? '$55-105/day' : budget === 'mid-range' ? '$105-190/day' : '$195-355/day'
+                },
+                packing_essentials: ['Comfortable walking shoes', 'Weather-appropriate clothing', 'Camera', 'Local currency', 'Travel insurance documents'],
+                cultural_dos_and_donts: {
+                    dos: [`Respect local customs`, `Learn basic local phrases`, `Tip appropriately`],
+                    donts: [`Don't ignore local etiquette`, `Don't forget travel insurance`, `Don't overpack your schedule`]
+                }
+            };
+
+            fallbackItinerary.hidden_gems = [`Hidden local market in ${destination}`, `Secret viewpoint known to locals`, `Traditional workshop experience`];
+            fallbackItinerary.local_events = `Check local event calendars for festivals and special activities during your visit`;
+
+            displayEnhancedAIItinerary(fallbackItinerary);
+        }
+
+        function getActivityByInterest(interest, destination) {
+            const activities = {
+                history: `Historical Museum of ${destination}`,
+                art: `Local Art Gallery & Studios`,
+                food: `Food Market & Cooking Experience`,
+                nature: `${destination} Nature Walk`,
+                nightlife: `Evening Entertainment District`,
+                shopping: `Local Markets & Artisan Shops`,
+                adventure: `Outdoor Adventure Activities`,
+                wellness: `Spa & Wellness Experience`,
+                culture: `Cultural Heritage Sites`,
+                photography: `Photography Tour of ${destination}`
+            };
+            return activities[interest] || `Cultural Experience in ${destination}`;
+        }
+
+        // Helper function to determine season
+        function getSeason(month) {
+            if (month >= 11 || month <= 1) return 'Winter';
+            if (month >= 2 && month <= 4) return 'Spring';
+            if (month >= 5 && month <= 7) return 'Summer';
+            return 'Fall';
+        }
+
+        // Enhanced AI itinerary display
+        function displayEnhancedAIItinerary(itinerary) {
+            const container = document.getElementById('itinerary-results');
+            let html = `
+                <div class="ai-header">
+                    <h3>🤖 Your Personalized AI Travel Plan</h3>
+                    <div class="destination-overview">
+                        <h4>📍 ${itinerary.destination_overview ? 'Destination Insights' : 'Overview'}</h4>
+                        ${itinerary.destination_overview ? `
+                            <div class="overview-grid">
+                                <div class="overview-item">
+                                    <strong>🌤️ Climate:</strong> ${itinerary.destination_overview.climate || 'Check local weather'}
+                                </div>
+                                <div class="overview-item">
+                                    <strong>💰 Currency:</strong> ${itinerary.destination_overview.local_currency || 'Local currency'}
+                                </div>
+                                <div class="overview-item">
+                                    <strong>🗣️ Key Phrases:</strong> ${itinerary.destination_overview.language_basics ? itinerary.destination_overview.language_basics.join(', ') : 'Learn basic greetings'}
+                                </div>
+                                <div class="overview-item">
+                                    <strong>💡 Tipping:</strong> ${itinerary.destination_overview.tipping_customs || 'Research local customs'}
+                                </div>
+                            </div>
+                            ${itinerary.destination_overview.best_neighborhoods ? `
+                                <div class="neighborhoods">
+                                    <strong>🏘️ Best Areas to Explore:</strong>
+                                    <ul>${itinerary.destination_overview.best_neighborhoods.map(area => `<li>${area}</li>`).join('')}</ul>
+                                </div>
+                            ` : ''}
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            // Enhanced day-by-day display
+            if (itinerary.days) {
+                itinerary.days.forEach(day => {
+                    html += `
+                        <div class="enhanced-day-card">
+                            <div class="day-header">
+                                <div class="day-title">Day ${day.day} - ${day.date}</div>
+                                <div class="day-theme">${day.theme || 'Exploration'}</div>
+                            </div>
+                            
+                            ${day.weather_consideration ? `
+                                <div class="weather-note">
+                                    <strong>🌤️ Weather:</strong> ${day.weather_consideration}
+                                </div>
+                            ` : ''}
+
+                            <div class="activities-section">
+                                ${day.activities ? day.activities.map(activity => `
+                                    <div class="enhanced-activity">
+                                        <div class="activity-header">
+                                            <span class="activity-time">${activity.time}</span>
+                                            <span class="activity-duration">${activity.duration || ''}</span>
+                                        </div>
+                                        <div class="activity-title">${activity.title}</div>
+                                        <div class="activity-location">📍 ${activity.location || ''}</div>
+                                        <p class="activity-description">${activity.description}</p>
+                                        
+                                        ${activity.cost ? `
+                                            <div class="activity-cost">
+                                                💰 ${activity.cost.amount || activity.cost} ${activity.cost.usd_equivalent ? `(${activity.cost.usd_equivalent})` : ''}
+                                            </div>
+                                        ` : ''}
+                                        
+                                        ${activity.insider_tip ? `
+                                            <div class="insider-tip">
+                                                💡 <strong>Insider Tip:</strong> ${activity.insider_tip}
+                                            </div>
+                                        ` : ''}
+                                        
+                                        ${activity.backup_option ? `
+                                            <div class="backup-option">
+                                                🔄 <strong>Backup:</strong> ${activity.backup_option}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('') : ''}
+                            </div>
+
+                            ${day.meals ? `
+                                <div class="meals-section">
+                                    <h5>🍽️ Today's Dining</h5>
+                                    <div class="meals-grid">
+                                        ${day.meals.breakfast ? `
+                                            <div class="meal-item">
+                                                <strong>🌅 Breakfast:</strong> ${day.meals.breakfast.restaurant}<br>
+                                                <em>Try: ${day.meals.breakfast.specialty}</em> (${day.meals.breakfast.cost})<br>
+                                                <small>${day.meals.breakfast.why_recommended}</small>
+                                            </div>
+                                        ` : ''}
+                                        ${day.meals.lunch ? `
+                                            <div class="meal-item">
+                                                <strong>☀️ Lunch:</strong> ${day.meals.lunch.restaurant}<br>
+                                                <em>Try: ${day.meals.lunch.specialty}</em> (${day.meals.lunch.cost})<br>
+                                                <small>${day.meals.lunch.why_recommended}</small>
+                                            </div>
+                                        ` : ''}
+                                        ${day.meals.dinner ? `
+                                            <div class="meal-item">
+                                                <strong>🌙 Dinner:</strong> ${day.meals.dinner.restaurant}<br>
+                                                <em>Try: ${day.meals.dinner.specialty}</em> (${day.meals.dinner.cost})<br>
+                                                <small>${day.meals.dinner.why_recommended}</small>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <div class="day-extras">
+                                ${day.cultural_insight ? `
+                                    <div class="cultural-insight">
+                                        🏛️ <strong>Cultural Insight:</strong> ${day.cultural_insight}
+                                    </div>
+                                ` : ''}
+                                
+                                ${day.photo_opportunities ? `
+                                    <div class="photo-ops">
+                                        📸 <strong>Photo Spots:</strong> ${day.photo_opportunities.join(', ')}
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="safety-alert">
+                                    <h4>🛡️ Today's Safety Tip</h4>
+                                    <p>${day.safety_tip || 'Stay aware of your surroundings and keep valuables secure.'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Enhanced practical information
+            if (itinerary.practical_information) {
+                const practical = itinerary.practical_information;
+                html += `
+                    <div class="practical-info-section">
+                        <h3>📋 Practical Information</h3>
+                        
+                        ${practical.total_estimated_cost ? `
+                            <div class="budget-breakdown">
+                                <h4>💰 Budget Breakdown (${practical.total_estimated_cost.total_per_person || 'Per Person'})</h4>
+                                ${practical.total_estimated_cost.budget_breakdown ? `
+                                    <div class="budget-grid">
+                                        ${Object.entries(practical.total_estimated_cost.budget_breakdown).map(([category, amount]) => `
+                                            <div class="budget-item">
+                                                <span class="budget-category">${category.charAt(0).toUpperCase() + category.slice(1)}:</span>
+                                                <span class="budget-amount">${amount}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                                ${practical.total_estimated_cost.total_for_group ? `
+                                    <div class="total-budget">
+                                        <strong>Total for Group: ${practical.total_estimated_cost.total_for_group}</strong>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+
+                        ${practical.packing_essentials ? `
+                            <div class="packing-section">
+                                <h4>🎒 Packing Essentials</h4>
+                                <ul class="packing-list">
+                                    ${practical.packing_essentials.map(item => `<li>${item}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        ${practical.cultural_dos_and_donts ? `
+                            <div class="culture-section">
+                                <h4>🤝 Cultural Guidelines</h4>
+                                <div class="dos-donts-grid">
+                                    <div class="dos">
+                                        <h5>✅ DO:</h5>
+                                        <ul>${practical.cultural_dos_and_donts.dos.map(item => `<li>${item}</li>`).join('')}</ul>
+                                    </div>
+                                    <div class="donts">
+                                        <h5>❌ DON'T:</h5>
+                                        <ul>${practical.cultural_dos_and_donts.donts.map(item => `<li>${item}</li>`).join('')}</ul>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // Hidden gems and extras
+            if (itinerary.hidden_gems || itinerary.local_events) {
+                html += `
+                    <div class="extras-section">
+                        ${itinerary.hidden_gems ? `
+                            <div class="hidden-gems">
+                                <h4>💎 Hidden Gems</h4>
+                                <ul>${itinerary.hidden_gems.map(gem => `<li>${gem}</li>`).join('')}</ul>
+                            </div>
+                        ` : ''}
+                        
+                        ${itinerary.local_events ? `
+                            <div class="local-events">
+                                <h4>🎉 Special Events</h4>
+                                <p>${itinerary.local_events}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
         }
 
         function displayAIItinerary(itinerary) {
@@ -1180,6 +2132,109 @@
         function generateItinerary() {
             generateItineraryWithAI();
         }
+
+        // Test function to check Gemini API connectivity
+        async function testGeminiAPI() {
+            console.log('Testing Gemini API...');
+            showStatusMessage('Testing AI connection...', 'info');
+            
+            try {
+                const testPrompt = "Say 'Hello! Gemini API is working correctly!' and nothing else.";
+                
+                const response = await fetch(`${AI_API_URL}?key=${AI_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: testPrompt
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.1,
+                            maxOutputTokens: 100,
+                            candidateCount: 1
+                        }
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error:', errorText);
+                    showStatusMessage(`❌ API Error: ${response.status} - ${errorText}`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                console.log('API Response:', data);
+
+                if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    const responseText = data.candidates[0].content.parts[0].text;
+                    showStatusMessage(`✅ Gemini AI Connection Successful! Response: ${responseText}`, 'success');
+                } else {
+                    console.error('Unexpected response format:', data);
+                    showStatusMessage('❌ Unexpected response format from AI service', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                showStatusMessage(`❌ AI Connection Test Failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Comprehensive troubleshooting function
+        function runDiagnostics() {
+            showStatusMessage('Running system diagnostics...', 'info');
+            
+            const diagnostics = [];
+            
+            // Check Google Maps
+            if (typeof google !== 'undefined' && google.maps) {
+                diagnostics.push('✅ Google Maps API loaded');
+            } else {
+                diagnostics.push('❌ Google Maps API not loaded');
+            }
+            
+            // Check Gemini API key
+            if (AI_API_KEY && AI_API_KEY !== 'YOUR_GEMINI_API_KEY_HERE') {
+                diagnostics.push('✅ Gemini API key configured');
+            } else {
+                diagnostics.push('❌ Gemini API key not configured');
+            }
+            
+            // Check autocomplete
+            const destinationInput = document.getElementById('destination');
+            if (destinationInput) {
+                diagnostics.push('✅ Destination input field found');
+            } else {
+                diagnostics.push('❌ Destination input field not found');
+            }
+            
+            // Check form elements
+            const form = document.getElementById('itinerary-form');
+            if (form) {
+                diagnostics.push('✅ Itinerary form found');
+            } else {
+                diagnostics.push('❌ Itinerary form not found');
+            }
+            
+            // Display results
+            const resultMessage = 'System Diagnostics:\n\n' + diagnostics.join('\n');
+            showStatusMessage(resultMessage.replace(/\n/g, '<br>'), 'info');
+            console.log('Diagnostics:', diagnostics);
+        }
+
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
         // Sample data and functions
         const emergencyNumbers = {
             'default': {
@@ -1651,6 +2706,35 @@
                 modal.style.display = 'none';
             });
         });
+
+        // Initialize the page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing page...');
+            
+            // Set default dates
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const weekLater = new Date(today);
+            weekLater.setDate(weekLater.getDate() + 7);
+            
+            document.getElementById('start-date').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('end-date').value = weekLater.toISOString().split('T')[0];
+            
+            // Initialize basic autocomplete if Google Maps isn't ready
+            setTimeout(function() {
+                if (typeof google === 'undefined' || !google.maps) {
+                    console.log('Google Maps not available, using basic autocomplete');
+                    setupBasicAutocomplete();
+                    showMapFallback();
+                }
+            }, 3000);
+            
+            console.log('Page initialization complete');
+        });
+
+        // Make sure initMap is available globally
+        window.initMap = initMap;
     </script>
 </body>
 </html>
